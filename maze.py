@@ -19,7 +19,7 @@ class Cell:
         draw(x1, y1, x2, y2):
             Draws the cell on the window with the specified coordinates.
     """
-    def __init__(self,window: 'Window'):
+    def __init__(self,window: 'Window'=None):
         """
         Initializes a new cell in the maze with walls on all sides.
 
@@ -126,7 +126,7 @@ class Maze:
         Redraws the window and pauses for a short duration to create an animation effect.
     """
     
-    def __init__(self, x1, y1, num_rows, num_col, cell_size_x, cell_size_y, window:'Window'):
+    def __init__(self, x1, y1, num_rows, num_col, cell_size_x, cell_size_y, window:'Window'=None):
         self._x1 = x1
         self._y1 = y1
         self._num_rows = num_rows
