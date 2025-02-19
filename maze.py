@@ -51,6 +51,9 @@ class Cell:
         - Right wall: from (x2, y1) to (x2, y2)
         - Bottom wall: from (x1, y2) to (x2, y2)
         """
+        if self._window is None:
+            return
+
         self._x1 = x1
         self._x2 = x2
         self._y1 = y1
@@ -67,4 +70,24 @@ class Cell:
             self._window.draw_line(line)
         if self.has_bottom_wall:
             line = Line(Point(x1, y2), Point(x2, y2))
-            self._window.draw_line(line)            
+            self._window.draw_line(line)
+            
+    def draw_move(self, to_cell, undo=False):
+        """
+        Draws a move from the current cell to the specified cell.
+
+        This method draws a line between the center points of the current cell and the target cell.
+        The line is drawn in red by default, or in gray if the move is being undone.
+
+        Args:
+            to_cell (Cell): The target cell to which the move is being drawn.
+            undo (bool, optional): If True, the move is being undone and the line is drawn in gray. Defaults to False.
+        """
+        half_point = abs((self._x2 - self._x1) // 2)
+        self.center_point = Point(self._x1 + half_point, self._y1 + half_point)
+
+        half_point = abs((to_cell._x2 - to_cell._x1) // 2)
+        to_cell.center_point = Point(to_cell._x1 + half_point, to_cell._y1 + half_point)
+
+        line = Line(self.center_point, to_cell.center_point)
+        self._window.draw_line(line, "gray" if undo else "red")
