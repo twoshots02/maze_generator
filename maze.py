@@ -63,15 +63,27 @@ class Cell:
         if self.has_left_wall:
             line = Line(Point(x1, y1), Point(x1, y2))
             self._window.draw_line(line)
+        else:
+            line = Line(Point(x1, y1), Point(x1, y2))
+            self._window.draw_line(line, "white")
         if self.has_top_wall:
             line = Line(Point(x1, y1), Point(x2, y1))
             self._window.draw_line(line)
+        else:
+            line = Line(Point(x1, y1), Point(x2, y1))
+            self._window.draw_line(line, "white")
         if self.has_right_wall:
             line = Line(Point(x2, y1), Point(x2, y2))
             self._window.draw_line(line)
+        else:
+            line = Line(Point(x2, y1), Point(x2, y2))
+            self._window.draw_line(line, "white")
         if self.has_bottom_wall:
             line = Line(Point(x1, y2), Point(x2, y2))
             self._window.draw_line(line)
+        else:
+            line = Line(Point(x1, y2), Point(x2, y2))
+            self._window.draw_line(line, "white")
             
     def draw_move(self, to_cell, undo=False):
         """
@@ -137,6 +149,7 @@ class Maze:
         self._cells = []
 
         self._create_cells()
+        self._break_entrance_and_exit()
 
     def _create_cells(self):
         for i in range(self._num_rows):
@@ -148,6 +161,7 @@ class Maze:
         for i in range(self._num_rows):
             for j in range(self._num_col):
                 self._draw_cell(i, j)
+        
         
     def _draw_cell(self, row, col):
         if self._window is None:
@@ -164,3 +178,17 @@ class Maze:
             return
         self._window.redraw()
         time.sleep(0.05)
+
+    def _break_entrance_and_exit(self):
+        """
+        Breaks the entrance and exit of the maze.
+
+        This method modifies the maze by removing the top wall of the cell at the 
+        starting position (0, 0) to create an entrance, and removing the bottom wall 
+        of the cell at the ending position (last row, last column) to create an exit. 
+        It also updates the visual representation of these cells.
+        """
+        self._cells[0][0].has_top_wall = False
+        self._draw_cell(0,0)
+        self._cells[self._num_rows - 1][self._num_col - 1].has_bottom_wall = False
+        self._draw_cell(self._num_rows - 1, self._num_col - 1)
