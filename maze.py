@@ -1,109 +1,7 @@
 from window import Window, Line, Point
+from cell import Cell
 import time
-
-class Cell:
-    """
-    Represents a single cell in a maze with walls on all sides.
-    Attributes:
-        has_left_wall (bool): Indicates if the cell has a left wall.
-        has_right_wall (bool): Indicates if the cell has a right wall.
-        has_top_wall (bool): Indicates if the cell has a top wall.
-        has_bottom_wall (bool): Indicates if the cell has a bottom wall.
-        _x1 (int or None): The x-coordinate of the top-left corner of the cell.
-        _x2 (int or None): The x-coordinate of the bottom-right corner of the cell.
-        _y1 (int or None): The y-coordinate of the top-left corner of the cell.
-        _y2 (int or None): The y-coordinate of the bottom-right corner of the cell.
-        _window (Window): The window object where the maze will be displayed.
-    Methods:
-        __init__(window: 'Window'):
-        draw(x1, y1, x2, y2):
-            Draws the cell on the window with the specified coordinates.
-    """
-    def __init__(self,window: 'Window'=None):
-        """
-        Initializes a new cell in the maze with walls on all sides.
-
-        Args:
-            window (Window): The window object where the maze will be displayed.
-        """
-        self.has_left_wall = True
-        self.has_right_wall = True
-        self.has_top_wall = True
-        self.has_bottom_wall = True
-        self._x1 = None
-        self._x2 = None
-        self._y1 = None
-        self._y2 = None
-        self._window = window
-    
-    def draw(self, x1, y1, x2, y2):
-        """
-        Draws the walls of the maze cell based on the given coordinates.
-
-        Parameters:
-        x1 (int): The x-coordinate of the top-left corner of the cell.
-        y1 (int): The y-coordinate of the top-left corner of the cell.
-        x2 (int): The x-coordinate of the bottom-right corner of the cell.
-        y2 (int): The y-coordinate of the bottom-right corner of the cell.
-
-        The method draws lines for the walls of the cell if they exist:
-        - Left wall: from (x1, y1) to (x1, y2)
-        - Top wall: from (x1, y1) to (x2, y1)
-        - Right wall: from (x2, y1) to (x2, y2)
-        - Bottom wall: from (x1, y2) to (x2, y2)
-        """
-        if self._window is None:
-            return
-
-        self._x1 = x1
-        self._x2 = x2
-        self._y1 = y1
-        self._y2 = y2
-
-        if self.has_left_wall:
-            line = Line(Point(x1, y1), Point(x1, y2))
-            self._window.draw_line(line)
-        else:
-            line = Line(Point(x1, y1), Point(x1, y2))
-            self._window.draw_line(line, "white")
-        if self.has_top_wall:
-            line = Line(Point(x1, y1), Point(x2, y1))
-            self._window.draw_line(line)
-        else:
-            line = Line(Point(x1, y1), Point(x2, y1))
-            self._window.draw_line(line, "white")
-        if self.has_right_wall:
-            line = Line(Point(x2, y1), Point(x2, y2))
-            self._window.draw_line(line)
-        else:
-            line = Line(Point(x2, y1), Point(x2, y2))
-            self._window.draw_line(line, "white")
-        if self.has_bottom_wall:
-            line = Line(Point(x1, y2), Point(x2, y2))
-            self._window.draw_line(line)
-        else:
-            line = Line(Point(x1, y2), Point(x2, y2))
-            self._window.draw_line(line, "white")
-            
-    def draw_move(self, to_cell, undo=False):
-        """
-        Draws a move from the current cell to the specified cell.
-
-        This method draws a line between the center points of the current cell and the target cell.
-        The line is drawn in red by default, or in gray if the move is being undone.
-
-        Args:
-            to_cell (Cell): The target cell to which the move is being drawn.
-            undo (bool, optional): If True, the move is being undone and the line is drawn in gray. Defaults to False.
-        """
-        half_point = abs((self._x2 - self._x1) // 2)
-        self.center_point = Point(self._x1 + half_point, self._y1 + half_point)
-
-        half_point = abs((to_cell._x2 - to_cell._x1) // 2)
-        to_cell.center_point = Point(to_cell._x1 + half_point, to_cell._y1 + half_point)
-
-        line = Line(self.center_point, to_cell.center_point)
-        self._window.draw_line(line, "gray" if undo else "red")
+import random
 
 class Maze:
     """
@@ -138,7 +36,7 @@ class Maze:
         Redraws the window and pauses for a short duration to create an animation effect.
     """
     
-    def __init__(self, x1, y1, num_rows, num_col, cell_size_x, cell_size_y, window:'Window'=None):
+    def __init__(self, x1, y1, num_rows, num_col, cell_size_x, cell_size_y, window:'Window'=None, seed=None):
         self._x1 = x1
         self._y1 = y1
         self._num_rows = num_rows
@@ -147,9 +45,11 @@ class Maze:
         self._cell_size_y = cell_size_y
         self._window = window
         self._cells = []
+        self._seed = random.seed(seed) if seed is not None else None
 
         self._create_cells()
         self._break_entrance_and_exit()
+        self._break_walls_r(0, 0)
 
     def _create_cells(self):
         for i in range(self._num_rows):
@@ -192,3 +92,53 @@ class Maze:
         self._draw_cell(0,0)
         self._cells[self._num_rows - 1][self._num_col - 1].has_bottom_wall = False
         self._draw_cell(self._num_rows - 1, self._num_col - 1)
+    
+    def _break_walls_r(self, row, col):
+        self._cells[row][col].visited = True
+        while True:
+            next_index_list = []
+
+            # determine which cell(s) to visit next
+            # left
+            if col > 0 and not self._cells[row][col - 1].visited:
+                next_index_list.append((row, col - 1))
+            # right
+            if col < self._num_col - 1 and not self._cells[row][col + 1].visited:
+                next_index_list.append((row, col + 1))
+            # up
+            if row > 0 and not self._cells[row - 1][col].visited:
+                next_index_list.append((row - 1, col))
+            # down
+            if row < self._num_rows - 1 and not self._cells[row + 1][col].visited:
+                next_index_list.append((row + 1, col))
+
+            # if there is nowhere to go from here
+            # just break out
+            if len(next_index_list) == 0:
+                self._draw_cell(row, col)
+                return
+
+            # randomly choose the next direction to go
+            direction_index = random.randrange(len(next_index_list))
+            next_index = next_index_list[direction_index]
+
+            # knock out walls between this cell and the next cell(s)
+            # right
+            if next_index[1] == col + 1:
+                self._cells[row][col].has_right_wall = False
+                self._cells[row][col + 1].has_left_wall = False
+            # left
+            if next_index[1] == col - 1:
+                self._cells[row][col].has_left_wall = False
+                self._cells[row][col - 1].has_right_wall = False
+            # down
+            if next_index[0] == row + 1:
+                self._cells[row][col].has_bottom_wall = False
+                self._cells[row + 1][col].has_top_wall = False
+            # up
+            if next_index[0] == row - 1:
+                self._cells[row][col].has_top_wall = False
+                self._cells[row - 1][col].has_bottom_wall = False
+
+            # recursively visit the next cell
+            self._break_walls_r(next_index[0], next_index[1])
